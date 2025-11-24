@@ -97,7 +97,7 @@ class BPECharacterTokenizer(BPETokenizer):
     def initialize_vocabulary(self, training_data):
         self.vocabulary = []
         self.token_to_id_map = {}
-        for char in sorted(list(set("".join(training_data)))) + self.special_tokens:
+        for char in self.special_tokens + sorted(list(set("".join(training_data)))):
             self.token_to_id_map[char] = len(self.vocabulary)
             self.vocabulary.append(char)
 
@@ -115,6 +115,6 @@ class BPEByteTokenizer(BPETokenizer):
     def initialize_vocabulary(self, _):
         self.vocabulary = []
         self.token_to_id_map = {}
-        for token in [bytes([i]) for i in range(256)] + [self.special_token_to_token(t) for t in self.special_tokens]:
+        for token in [self.special_token_to_token(t) for t in self.special_tokens] +[bytes([i]) for i in range(256)]:
             self.token_to_id_map[token] = len(self.vocabulary)
             self.vocabulary.append(token)
