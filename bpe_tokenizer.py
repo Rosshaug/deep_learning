@@ -6,9 +6,6 @@ class BPETokenizer():
         self.special_tokens = ["<unk>","<pad>", "<bos>", "<eos>"]
         self.vocabulary = []
         self.token_to_id_map = {}
-        # maps pair tuple -> merged token
-        self.merges = {}
-        # ordered list of merge pairs in the order they were learned
         self.merge_order = []
 
     def preprocess(self, text):
