@@ -4,7 +4,7 @@ from typing import List, Dict, Tuple, Set
 
 class BPETokenizer():
     def __init__(self):
-        self.special_tokens = ["<unk>","<pad>", "<bos>", "<eos>"]
+        self.special_tokens = ["<unk>","<pad>", "<bos>", "<eos>", "<mask>"]
         self.vocabulary: List = [] # Stores bytes or strings
         self.token_to_id_map: Dict = {}  
 
