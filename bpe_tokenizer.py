@@ -1,5 +1,6 @@
 import copy
 from collections import defaultdict
+from typing import List, Dict, Tuple
 
 class BPETokenizer():
     def __init__(self):
@@ -48,44 +49,49 @@ class BPETokenizer():
 
         return self.postprocess(result_tokens)
 
-    def train(self, training_data: list[str], vocab_size = 10000):
-        self.initialize_vocabulary(training_data)
-        preprocessed_data = [self.preprocess(s) for s in training_data]
+    def train(self, training_data: List[str], vocab_size: int = 10000):
+            self.initialize_vocabulary(training_data)
 
-        while len(self.vocabulary) < vocab_size:
-            pair_freq = defaultdict(int)
-            for sample in preprocessed_data:
-                for a, b in zip(sample[:-1], sample[1:]):
-                    pair_freq[(a, b)] += 1
+            token_freqs: Dict[Tuple[str, ...], int] = defaultdict(int)
+            for text in training_data:
+                tokens = tuple(self.preprocess(text))
+                token_freqs[tokens] += 1
 
-            pair_to_merge = max(pair_freq, key=pair_freq.get)
-            preprocessed_data = self.merge(preprocessed_data, pair_to_merge)
+            while len(self.vocabulary) < vocab_size:
+                pair_freq = defaultdict(int)
+                for tokens, freq in token_freqs.items():
+                    for a, b in zip(tokens[:-1], tokens[1:]):
+                        pair_freq[(a, b)] += freq
 
-            next_id = len(self.vocabulary)
-            new_token = pair_to_merge[0] + pair_to_merge[1]
-            self.vocabulary.append(new_token)
-            self.token_to_id_map[new_token] = next_id
-            self.merge_order.append((pair_to_merge[0], pair_to_merge[1]))
+                if not pair_freq:
+                    break
 
-    
-    def merge(self, training_data, pair_to_merge):
-        a, b = pair_to_merge
-        merged_token = a + b
+                pair_to_merge = max(pair_freq, key=pair_freq.get)
+                a, b = pair_to_merge
+                merged_token = a + b
 
-        new_data = []
-        for sample in training_data:
-            i = 0
-            new_sample = []
-            while i < len(sample):
-                if i < len(sample) - 1 and sample[i] == a and sample[i + 1] == b:
-                    new_sample.append(merged_token)
-                    i += 2
-                else:
-                    new_sample.append(sample[i])
-                    i += 1
-            new_data.append(new_sample)
+                new_token_freqs: Dict[Tuple[str, ...], int] = defaultdict(int)
+                
+                for tokens, freq in token_freqs.items():
+                    i = 0
+                    new_tokens: List[str] = []
+                    while i < len(tokens):
+                        if i < len(tokens) - 1 and tokens[i] == a and tokens[i + 1] == b:
+                            new_tokens.append(merged_token)
+                            i += 2
+                        else:
+                            new_tokens.append(tokens[i])
+                            i += 1
+                    
+                    new_token_freqs[tuple(new_tokens)] += freq
+                
+                token_freqs = new_token_freqs 
 
-        return new_data
+                next_id = len(self.vocabulary)
+                self.vocabulary.append(merged_token)
+                self.token_to_id_map[merged_token] = next_id
+                self.merge_order.append((a, b))
+
 
 class BPECharacterTokenizer(BPETokenizer):
     def preprocess(self, text):
