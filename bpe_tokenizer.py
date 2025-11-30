@@ -40,12 +40,12 @@ class BPETokenizer():
         ]
         
         pair_freq: Counter[Tuple[int, int]] = Counter()
-        pair_to_sequences: Dict[Tuple[int, int], Set[int]] = defaultdict(set)
+        pair_instances: Dict[Tuple[int, int], Set[int]] = defaultdict(set)
         
         for idx, seq in enumerate(corpus):
             for a, b in zip(seq[:-1], seq[1:]):
                 pair_freq[(a, b)] += 1
-                pair_to_sequences[(a, b)].add(idx)
+                pair_instances[(a, b)].add(idx)
 
 
         while len(self.vocabulary) < vocab_size and pair_freq:
@@ -63,11 +63,8 @@ class BPETokenizer():
             if write_progress:
                 print(f"Merging pair ({self.vocabulary[a]}, {self.vocabulary[b]}) -> {merged_token} | New ID: {new_id} | Frequency: {freq}")
 
-            affected_sequence_indices = list(pair_to_sequences[(a, b)])
-            if a in [4 ,168] and b in [4 ,168] and a != b:
-                print(affected_sequence_indices)
-
-            del pair_to_sequences[(a, b)] # Delete the old pair globally
+            affected_sequence_indices = list(pair_instances[(a, b)])
+            del pair_instances[(a, b)]
 
             for seq_idx in affected_sequence_indices:
                 seq = corpus[seq_idx]
@@ -76,7 +73,7 @@ class BPETokenizer():
                     old_pair = (seq[i], seq[i+1])
                     if pair_freq[old_pair] > 0:
                         pair_freq[old_pair] -= 1
-                    pair_to_sequences[old_pair].discard(seq_idx)
+                    pair_instances[old_pair].discard(seq_idx)
                 
                 new_seq = self._replace_pair_in_sequence(seq, a, b, new_id)
                 corpus[seq_idx] = new_seq
@@ -84,7 +81,7 @@ class BPETokenizer():
                 for i in range(len(new_seq) - 1):
                     new_pair = (new_seq[i], new_seq[i+1])
                     pair_freq[new_pair] += 1
-                    pair_to_sequences[new_pair].add(seq_idx)
+                    pair_instances[new_pair].add(seq_idx)
 
             pair_freq = +pair_freq
 
