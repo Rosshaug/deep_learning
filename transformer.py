@@ -5,22 +5,25 @@ import math
 class TransformerEncoderModel(nn.Module):
     def __init__(self, num_embeddings, d_model, padding_idx, nhead, dim_feedforward,num_layers):
         super().__init__()
-        self.embedding = nn.Embedding(num_embeddings=num_embeddings, embedding_dim=d_model, padding_idx=padding_idx)
+        self.padding_idx = padding_idx
+        self.embedding = nn.Embedding(num_embeddings=num_embeddings, embedding_dim=d_model, padding_idx=self.padding_idx)
         self.positional_encoding = PositionalEncoding(d_model=d_model)
         encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward, batch_first=True)
         self.encoder = nn.TransformerEncoder(encoder_layer=encoder_layer, num_layers=num_layers)
+        self.fc = nn.Linear(d_model, num_embeddings)
     
     def forward(self, x):
-        x, padding_mask = self.pad_input(x)
+        padding_mask = self.get_padding_mask(x)
         x = self.embedding(x)
         x = self.positional_encoding(x)
         x = self.encoder(x, src_key_padding_mask=padding_mask)
+        x = self.fc(x)
         return x
     
-    def pad_input(self, x):
-        x = nn.utils.rnn.pad_sequence(x, batch_first=True, padding_value=1)
-        padding_mask = (x == 1)
-        return x, padding_mask
+    def get_padding_mask(self, x):
+        #x = nn.utils.rnn.pad_sequence(x, batch_first=True, padding_value=1)
+        padding_mask = (x == self.padding_idx)
+        return padding_mask
 
 # https://towardsdev.com/positional-encoding-in-transformers-using-pytorch-63b5c3f57d54
 # Numbers seems to come from "Attention is all you need" paper
