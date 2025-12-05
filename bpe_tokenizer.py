@@ -4,8 +4,8 @@ from typing import List, Dict, Tuple, Set
 
 class BPETokenizer():
     def __init__(self):
-        self.special_tokens = ["<unk>","<pad>", "<bos>", "<eos>", "<mask>"]
-        self.vocabulary: List = [] # Stores bytes or strings
+        self.special_tokens = ["<unk>","<pad>", "<mask>"]
+        self.vocabulary: List = []
         self.token_to_id_map: Dict = {}  
 
         self.merge_order: List[Tuple[int, int, int]] = [] 
@@ -140,11 +140,13 @@ class BPEByteTokenizer(BPETokenizer):
         self.vocabulary = []
         self.token_to_id_map = {}
 
+        # Add special tokens
         for sp in self.special_tokens:
             token = sp.encode("utf-8")
             self.token_to_id_map[token] = len(self.vocabulary)
             self.vocabulary.append(token)
 
+        # Add chars
         for i in range(256):
             b = bytes([i])
             self.token_to_id_map[b] = len(self.vocabulary)
