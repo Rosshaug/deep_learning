@@ -40,3 +40,20 @@ class PositionalEncoding(nn.Module):
 
     def forward(self, x):
         return x + self.pe[:, :x.size(1), :]
+    
+
+class TransformerClassifierModel(nn.Module):
+    def __init__(self, encoder, n_classes):
+        super().__init__()
+        self.encoder = encoder
+        self.fc = nn.Sequential(nn.Linear(encoder.embedding.embedding_dim, encoder.embedding.embedding_dim), nn.ReLU(), nn.Linear(encoder.embedding.embedding_dim, n_classes))
+    
+    def forward(self, x):
+        padding_mask = self.encoder.get_padding_mask(x)
+        x = self.encoder.embedding(x)
+        x = self.encoder.positional_encoding(x)
+        x = self.encoder.encoder(x, src_key_padding_mask=padding_mask)
+        # Pooling: take the mean over the sequence dimension
+        x = x.mean(dim=1)
+        x = self.fc(x)
+        return x
